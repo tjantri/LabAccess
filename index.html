@@ -10,20 +10,27 @@
         h1 { text-align: center; color: #333; }
         label { display: block; margin-bottom: 8px; font-weight: bold; }
         input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; }
-        button {
-            background-color: #5900ff; color: white; padding: 10px 15px; border: none;
+        button { /* Main search button */
+            background-color: #007bff; color: white; padding: 10px 15px; border: none;
             border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;
         }
-        button:hover { background-color: #5900ff; }
+        button:hover { background-color: #0056b3; }
         #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
-        #results p { margin: 5px 0; }
+        #results p { margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
+        #results p strong { margin-right: 5px; }
+        .copy-btn {
+            background-color: #6c757d; color: white; padding: 5px 10px; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 10px;
+        }
+        .copy-btn:hover { background-color: #5a6268; }
+        .copy-btn.copied { background-color: #28a745; } /* Green when copied */
         .loading { text-align: center; font-style: italic; }
         .error { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Find Lab Access & Credential Information</h1>
+        <h1>Find Personal Information</h1>
         <label for="email">Enter Email Address:</label>
         <input type="email" id="emailInput" placeholder="e.g., user@example.com">
         <button onclick="fetchInfo()">Search</button>
@@ -32,38 +39,37 @@
         </div>
     </div>
 
-<script>
-
-        // !!! IMPORTANT: PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE !!!
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec';
+    <script>
+        const WEB_APP_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE'; // !!! PASTE YOUR URL HERE !!!
 
         async function fetchInfo() {
             const email = document.getElementById('emailInput').value.trim();
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p class="loading">Loading...</p>';
 
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') || WEB_APP_URL.includes('YOUR_URL_HERE')) {
+                resultsDiv.innerHTML = '<p class="error">ERROR: WEB_APP_URL is not configured correctly in the script.</p>';
+                console.error("WEB_APP_URL is not configured:", WEB_APP_URL);
+                return;
+            }
+
             if (!email) {
                 resultsDiv.innerHTML = '<p class="error">Please enter an email address.</p>';
                 return;
             }
 
-            // Construct the URL with the email parameter
             const requestUrl = `${WEB_APP_URL}?email=${encodeURIComponent(email)}`;
+            console.log("Attempting to fetch:", requestUrl);
 
             try {
                 const response = await fetch(requestUrl);
                 if (!response.ok) {
-                    // Try to parse error from Apps Script JSON response if available
                     let errorMsg = `HTTP error! Status: ${response.status}`;
                     try {
                         const errorData = await response.json();
-                        if (errorData && errorData.error) {
-                            errorMsg = `Error: ${errorData.error}`;
-                            if(errorData.details) errorMsg += ` Details: ${errorData.details}`;
-                        } else if (errorData && errorData.message) {
-                            errorMsg = `Message: ${errorData.message}`;
-                        }
-                    } catch (e) { /* Could not parse JSON error, stick with HTTP status */ }
+                        if (errorData && errorData.error) errorMsg = `Error: ${errorData.error}`;
+                        else if (errorData && errorData.message) errorMsg = `Message: ${errorData.message}`;
+                    } catch (e) { /* Could not parse JSON error */ }
                     throw new Error(errorMsg);
                 }
 
@@ -72,8 +78,13 @@
                 if (data.success && data.data) {
                     let htmlOutput = '<h3>Information Found:</h3>';
                     for (const key in data.data) {
-                        if (Object.hasOwnProperty.call(data.data, key)) {
-                            htmlOutput += `<p><strong>${escapeHtml(key)}:</strong> ${escapeHtml(data.data[key])}</p>`;
+                        if (Object.hasOwnProperty.call(data.data, key) && data.data[key]) { // Only show if value exists
+                            const value = data.data[key];
+                            // Create a unique ID for the button if needed, or just pass the value directly
+                            htmlOutput += `<p>
+                                            <span><strong>${escapeHtml(key)}:</strong> ${escapeHtml(value)}</span>
+                                            <button class="copy-btn" onclick="copyToClipboard(this, '${escapeJsString(value)}')">Copy</button>
+                                         </p>`;
                         }
                     }
                     resultsDiv.innerHTML = htmlOutput;
@@ -90,7 +101,6 @@
             }
         }
 
-        // Simple HTML escaping function to prevent XSS
         function escapeHtml(unsafe) {
             if (typeof unsafe !== 'string') return '';
             return unsafe
@@ -100,6 +110,71 @@
                  .replace(/"/g, "&quot;")
                  .replace(/'/g, "'");
         }
+
+        // New function to escape strings for use in JavaScript function calls within HTML attributes
+        function escapeJsString(unsafe) {
+            if (typeof unsafe !== 'string') return '';
+            return unsafe
+                .replace(/\\/g, '\\\\')  // Backslash
+                .replace(/'/g, '\\\'')   // Single quote
+                .replace(/"/g, '\\"')    // Double quote
+                .replace(/\n/g, '\\n')   // Newline
+                .replace(/\r/g, '\\r')   // Carriage return
+                .replace(/\t/g, '\\t')   // Tab
+                .replace(/\u2028/g, '\\u2028') // Line separator
+                .replace(/\u2029/g, '\\u2029'); // Paragraph separator
+        }
+
+
+        async function copyToClipboard(buttonElement, textToCopy) {
+            if (!navigator.clipboard) {
+                // Fallback for older browsers (less common now)
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    textArea.style.position = "fixed"; // Prevent scrolling to bottom of page in MS Edge.
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    console.log('Fallback: Text copied to clipboard');
+                    if(buttonElement) updateCopyButton(buttonElement, true);
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                    if(buttonElement) updateCopyButton(buttonElement, false, 'Error');
+                }
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                console.log('Text copied to clipboard');
+                if(buttonElement) updateCopyButton(buttonElement, true);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                if(buttonElement) updateCopyButton(buttonElement, false, 'Error');
+            }
+        }
+
+        function updateCopyButton(buttonElement, success, message = 'Copied!') {
+            const originalText = buttonElement.textContent;
+            if (success) {
+                buttonElement.textContent = message;
+                buttonElement.classList.add('copied');
+                buttonElement.disabled = true;
+            } else {
+                buttonElement.textContent = message; // e.g., 'Error'
+                // You might want to add an error class for styling
+            }
+
+            setTimeout(() => {
+                buttonElement.textContent = originalText; // Or 'Copy'
+                buttonElement.classList.remove('copied');
+                buttonElement.disabled = false;
+            }, 2000); // Reset after 2 seconds
+        }
+
 
         // Optional: Allow pressing Enter in the input field to trigger search
         document.getElementById('emailInput').addEventListener('keypress', function (e) {
