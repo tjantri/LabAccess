@@ -3,30 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Info Lookup</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
-        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
-        h1 { text-align: center; color: #333; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; }
-        input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; }
-        button { /* Main search button */
-            background-color: #007bff; color: white; padding: 10px 15px; border: none;
-            border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;
-        }
-        button:hover { background-color: #0056b3; }
-        #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
-        #results p { margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
-        #results p strong { margin-right: 5px; }
-        .copy-btn {
-            background-color: #6c757d; color: white; padding: 5px 10px; border: none;
-            border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 10px;
-        }
-        .copy-btn:hover { background-color: #5a6268; }
-        .copy-btn.copied { background-color: #28a745; } /* Green when copied */
-        .loading { text-align: center; font-style: italic; }
-        .error { color: red; font-weight: bold; }
-    </style>
+    <title>Lab Access&Credential Info Lookup</title>
+<style>
+    body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+    .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+    h1 { text-align: center; color: #333; }
+    label { display: block; margin-bottom: 8px; font-weight: bold; }
+    input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; }
+    button { /* Main search button */
+        background-color: #007bff; color: white; padding: 10px 15px; border: none;
+        border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;
+    }
+    button:hover { background-color: #0056b3; }
+    #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
+
+    /* Styles for each result row (paragraph) */
+    #results p {
+        margin: 8px 0;
+        display: flex;                /* Use flexbox for layout */
+        justify-content: space-between; /* Pushes info to left, button to right */
+        align-items: center;          /* Vertically align items in the center */
+        gap: 10px;                    /* Adds a small gap between the info and the button */
+        border-bottom: 1px solid #ddd; /* Optional: adds a line between items */
+        padding-bottom: 8px;          /* Optional: padding for the line */
+    }
+    #results p:last-child {
+        border-bottom: none; /* Optional: remove border from last item */
+    }
+
+    /* Styles for the text part of the result (Key: Value) */
+    #results p span {
+        flex-grow: 1; /* Allows the text span to take up available space */
+        word-break: break-all; /* Helps prevent long text from breaking layout */
+    }
+    #results p strong { margin-right: 5px; }
+
+
+    /* Styles for the Copy Button */
+    .copy-btn {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;    /* Adjust font size if needed */
+        padding: 6px 10px;  /* Adjust padding to change button size (height and width) */
+        /* min-width: 60px; */ /* Optional: Set a minimum width if you want all buttons to be at least this wide */
+        /* width: 70px; */    /* Optional: Set a fixed width */
+        /* height: 30px; */   /* Optional: Set a fixed height (careful with text overflow) */
+        margin-left: auto;  /* This can also help push it to the right if justify-content isn't enough, but space-between is better */
+        flex-shrink: 0;     /* Prevents the button from shrinking if the text is too long */
+        text-align: center;
+    }
+    .copy-btn:hover { background-color: #5a6268; }
+    .copy-btn.copied { background-color: #28a745; } /* Green when copied */
+
+    .loading { text-align: center; font-style: italic; }
+    .error { color: red; font-weight: bold; }
+</style>
 </head>
 <body>
     <div class="container">
