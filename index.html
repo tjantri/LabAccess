@@ -47,12 +47,19 @@
         border-radius: 4px;
         cursor: pointer;
         font-size: 12px;    /* Adjust font size if needed */
-        padding: 6px 30px;  
-        flex-shrink: 0;     /* Prevents the button from shrinking if the text is too long */
-        text-align: center;
-        display: inline-flex; /* Or 'flex' if the button should take full width of its column */
-        align-items: center;    /* Vertical centering */
-        justify-content: center;
+        box-sizing: border-box; /* Ensures padding & border are INCLUDED in width/height */
+        min-width: 70px;      /* Give it a bit more minimum width to ensure "Copy" fits comfortably with padding */
+                          /* Adjust this value based on how it looks */
+        width: auto;          /* Let the width be determined by content + padding, unless min-width is larger */
+
+        /* --- Flexbox for Centering Content --- */
+        display: inline-flex; /* Treat the button as an inline-level flex container */
+        align-items: center;    /* Vertical centering of content */
+        justify-content: center;/* Horizontal centering of content */
+
+        /* --- Text Properties --- */
+        text-align: center;     /* Fallback / belt-and-suspenders for text */
+        line-height: normal;    /* Reset line-height to prevent interference */
     }
     .copy-btn:hover { background-color: #5a6268; }
     .copy-btn.copied { background-color: #28a745; } /* Green when copied */
