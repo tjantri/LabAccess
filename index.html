@@ -109,49 +109,51 @@
             console.log("Attempting to fetch:", requestUrl);
 
             try {
-                const response = await fetch(requestUrl);
-                if (!response.ok) { /* ... (error handling as before) ... */ }
-                const data = await response.json();
+    const response = await fetch(requestUrl);
+    // if (!response.ok) { /* ... your existing error handling for response.ok ... */ } // You can keep this
 
-                if (data.success && data.data) {
-                    let htmlOutput = '<h3>Information Found:</h3>';
-                    // The order of keys from Object.keys(data.data) usually matches Google Sheet column order
-                    // if the Apps Script constructed the object by iterating headers.
-                    const headersInOrder = Object.keys(data.data);
+    const responseText = await response.text(); // Get it as text first
+    console.log("FRONTEND: Raw response text:", responseText);
 
-                    for (const key of headersInOrder) {
-                        if (Object.hasOwnProperty.call(data.data, key)) { // Good practice
-                            const value = data.data[key] || ""; // Ensure value is a string, empty if null/undefined
-                            const escapedKey = escapeHtml(key);
-                            const displayValue = value ? escapeHtml(value) : "<em>--------------</em>"; // Show (empty) or similar
+    const data = JSON.parse(responseText); // Parse it
+    console.log("FRONTEND: Parsed data object:", JSON.stringify(data, null, 2));
 
-                            if (key === SEPARATOR_HEADER_KEY) {
-                                // If the key is our designated separator, add the separator HTML
-                                htmlOutput += `<hr class="data-separator">`;
-                            } else {
-                                // Otherwise, display the data row
-                                htmlOutput += `<p>`;
-                                htmlOutput += `<span><strong>${escapedKey}:</strong> ${displayValue}</span>`;
 
-                                if (value) { // Only add copy button if there's an actual value
-                                    htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapeJsString(value)}')">Copy</button>`;
-                                }
-                                // If you want a disabled button for empty fields:
-                                // else {
-                                //    htmlOutput += `<button class="copy-btn" disabled title="Nothing to copy">Copy</button>`;
-                                // }
-                                htmlOutput += `</p>`;
-                            }
-                        }
+    if (data.success && data.data) {
+        console.log("FRONTEND: data.data object:", JSON.stringify(data.data, null, 2));
+        console.log("FRONTEND: Keys of data.data:", Object.keys(data.data));
+
+        let htmlOutput = '<h3>Information Found:</h3>';
+        const headersInOrder = Object.keys(data.data);
+
+        for (const key of headersInOrder) { // key will be "Email", then "Name", etc.
+            console.log(`FRONTEND: Processing key: "${key}"`); // Log each key
+            if (Object.hasOwnProperty.call(data.data, key)) {
+                const value = data.data[key] || "";
+                console.log(`FRONTEND: Value for "${key}": "${value}"`); // Log each value
+                const escapedKey = escapeHtml(key);
+                const displayValue = value ? escapeHtml(value) : "<em>--------------</em>";
+
+                // ... rest of your HTML generation ...
+                if (key === SEPARATOR_HEADER_KEY) {
+                    htmlOutput += `<hr class="data-separator">`;
+                } else {
+                    htmlOutput += `<p>`;
+                    htmlOutput += `<span><strong>${escapedKey}:</strong> ${displayValue}</span>`;
+                    if (value) {
+                        htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapeJsString(value)}')">Copy</button>`;
                     }
-                    resultsDiv.innerHTML = htmlOutput;
-                } else if (data.message) { /* ... (message handling as before) ... */ }
-                else if (data.error) { /* ... (error handling as before) ... */ }
-                else { /* ... (default error as before) ... */ }
-
-            } catch (error) { /* ... (catch block as before) ... */ }
+                    htmlOutput += `</p>`;
+                }
+            }
         }
-
+        resultsDiv.innerHTML = htmlOutput;
+    } else if (data.message) { /* ... */ }
+    // ... rest of your conditions ...
+} catch (error) {
+    console.error("FRONTEND: Fetch or processing error:", error); // Log any catch block errors
+        }
+    }
         // ... (escapeHtml, escapeJsString, copyToClipboard, updateCopyButton functions as before) ...
         // ... (event listener for Enter key as before) ...
 
