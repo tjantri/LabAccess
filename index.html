@@ -123,7 +123,7 @@
                         if (Object.hasOwnProperty.call(data.data, key)) { // Good practice
                             const value = data.data[key] || ""; // Ensure value is a string, empty if null/undefined
                             const escapedKey = escapeHtml(key);
-                            const displayValue = value ? escapeHtml(value) : "<em>(empty)</em>"; // Show (empty) or similar
+                            const displayValue = value ? escapeHtml(value) : "<em>--------------</em>"; // Show (empty) or similar
 
                             if (key === SEPARATOR_HEADER_KEY) {
                                 // If the key is our designated separator, add the separator HTML
