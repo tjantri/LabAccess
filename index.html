@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab Access&Credential Info Lookup</title>
+    <title>Lab Access & Credential Info Lookup</title>
 <style>
     body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
     .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
@@ -16,61 +16,24 @@
     }
     button:hover { background-color: #0056b3; }
     #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
-
-    /* Styles for each result row (paragraph) */
+    #results h3 { margin-top: 0; }
     #results p {
-        margin: 8px 0;
-        display: flex;                /* Use flexbox for layout */
-        justify-content: space-between; /* Pushes info to left, button to right */
-        align-items: center;          /* Vertically align items in the center */
-        gap: 10px;                    /* Adds a small gap between the info and the button */
-        border-bottom: 1px solid #ddd; /* Optional: adds a line between items */
-        padding-bottom: 8px;          /* Optional: padding for the line */
+        margin: 8px 0; display: flex; justify-content: space-between; align-items: center;
+        gap: 10px; border-bottom: 1px solid #ddd; padding-bottom: 8px;
     }
-    #results p:last-child {
-        border-bottom: none; /* Optional: remove border from last item */
-    }
-
-    /* Styles for the text part of the result (Key: Value) */
-    #results p span {
-        flex-grow: 1; /* Allows the text span to take up available space */
-        word-break: break-all; /* Helps prevent long text from breaking layout */
-    }
+    #results p:last-child { border-bottom: none; }
+    #results p span { flex-grow: 1; word-break: break-all; }
     #results p strong { margin-right: 5px; }
-    #results p span em { /* Style for (empty) placeholder */
-        color: #777;
-        font-style: italic;
-    }
-    /* Styles for the Copy Button */
+    #results p span em { color: #777; font-style: italic; }
     .copy-btn {
-        background-color: #6c757d;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 12px;    /* Adjust font size if needed */
-        box-sizing: border-box; /* Ensures padding & border are INCLUDED in width/height */
-        min-width: 70px;      /* Give it a bit more minimum width to ensure "Copy" fits comfortably with padding */
-                          /* Adjust this value based on how it looks */
-        width: auto;          /* Let the width be determined by content + padding, unless min-width is larger */
-
-        /* --- Flexbox for Centering Content --- */
-        display: inline-flex; /* Treat the button as an inline-level flex container */
-        align-items: center;    /* Vertical centering of content */
-        justify-content: center;/* Horizontal centering of content */
-
-        /* --- Text Properties --- */
-        text-align: center;     /* Fallback / belt-and-suspenders for text */
-        line-height: normal;    /* Reset line-height to prevent interference */
+        background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;
+        font-size: 12px; padding: 6px 10px; box-sizing: border-box; min-width: 70px; width: auto;
+        display: inline-flex; align-items: center; justify-content: center;
+        text-align: center; line-height: normal;
     }
     .copy-btn:hover { background-color: #5a6268; }
-    .copy-btn.copied { background-color: #28a745; } /* Green when copied */
-    .data-separator {
-            margin-top: 12px;
-            margin-bottom: 12px;
-            border: 0;
-            border-top: 1px solid #ccc; /* A simple horizontal line */
-        }
+    .copy-btn.copied { background-color: #28a745; }
+    .data-separator { margin-top: 12px; margin-bottom: 12px; border: 0; border-top: 1px solid #ccc; }
     .loading { text-align: center; font-style: italic; }
     .error { color: red; font-weight: bold; }
 </style>
@@ -87,17 +50,23 @@
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec'; // !!! PASTE YOUR URL HERE !!!
-        const SEPARATOR_HEADER_KEY = "---"; // !!! IMPORTANT: Change this if your separator column header is different !!!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec'; // This is your actual URL
+        const SEPARATOR_HEADER_KEY = "---";
 
         async function fetchInfo() {
-            const email = document.getElementById('emailInput').value.trim();
             const resultsDiv = document.getElementById('results');
+            console.log("FRONTEND: fetchInfo called. resultsDiv element:", resultsDiv);
+            if (!resultsDiv) {
+                console.error("CRITICAL: resultsDiv is null! HTML element with ID 'results' not found.");
+                return;
+            }
+
+            const email = document.getElementById('emailInput').value.trim();
             resultsDiv.innerHTML = '<p class="loading">Loading...</p>';
 
             if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') || WEB_APP_URL.includes('YOUR_URL_HERE')) {
-                resultsDiv.innerHTML = '<p class="error">ERROR: WEB_APP_URL is not configured correctly in the script.</p>';
-                console.error("WEB_APP_URL is not configured:", WEB_APP_URL);
+                resultsDiv.innerHTML = '<p class="error">ERROR: WEB_APP_URL is not configured correctly (still contains placeholder).</p>';
+                console.error("WEB_APP_URL is not configured (still contains placeholder):", WEB_APP_URL);
                 return;
             }
             if (!email) {
@@ -106,62 +75,143 @@
             }
 
             const requestUrl = `${WEB_APP_URL}?email=${encodeURIComponent(email)}`;
-            console.log("Attempting to fetch:", requestUrl);
+            console.log("FRONTEND: Attempting to fetch:", requestUrl);
 
             try {
-    const response = await fetch(requestUrl);
-    // if (!response.ok) { /* ... your existing error handling for response.ok ... */ } // You can keep this
-
-    const responseText = await response.text(); // Get it as text first
-    console.log("FRONTEND: Raw response text:", responseText);
-
-    const data = JSON.parse(responseText); // Parse it
-    console.log("FRONTEND: Parsed data object:", JSON.stringify(data, null, 2));
-
-
-    if (data.success && data.data) {
-        console.log("FRONTEND: data.data object:", JSON.stringify(data.data, null, 2));
-        console.log("FRONTEND: Keys of data.data:", Object.keys(data.data));
-
-        let htmlOutput = '<h3>Information Found:</h3>';
-        const headersInOrder = Object.keys(data.data);
-
-        for (const key of headersInOrder) { // key will be "Email", then "Name", etc.
-            console.log(`FRONTEND: Processing key: "${key}"`); // Log each key
-            if (Object.hasOwnProperty.call(data.data, key)) {
-                const value = data.data[key] || "";
-                console.log(`FRONTEND: Value for "${key}": "${value}"`); // Log each value
-                const escapedKey = escapeHtml(key);
-                const displayValue = value ? escapeHtml(value) : "<em>--------------</em>";
-
-                // ... rest of your HTML generation ...
-                if (key === SEPARATOR_HEADER_KEY) {
-                    htmlOutput += `<hr class="data-separator">`;
-                } else {
-                    htmlOutput += `<p>`;
-                    htmlOutput += `<span><strong>${escapedKey}:</strong> ${displayValue}</span>`;
-                    if (value) {
-                        htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapeJsString(value)}')">Copy</button>`;
-                    }
-                    htmlOutput += `</p>`;
+                const response = await fetch(requestUrl);
+                if (!response.ok) {
+                    let errorMsg = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json(); // Try to get error details
+                        if (errorData && errorData.error) errorMsg = `Error from server: ${errorData.error}`;
+                        else if (errorData && errorData.message) errorMsg = `Message from server: ${errorData.message}`;
+                    } catch (e) { /* Could not parse JSON error from server */ }
+                    throw new Error(errorMsg);
                 }
+
+                const responseText = await response.text();
+                console.log("FRONTEND: Raw response text:", responseText);
+
+                const data = JSON.parse(responseText);
+                console.log("FRONTEND: Parsed data object:", JSON.stringify(data, null, 2));
+
+
+                if (data.success && data.data) {
+                    console.log("FRONTEND: data.data object:", JSON.stringify(data.data, null, 2));
+                    console.log("FRONTEND: Keys of data.data:", Object.keys(data.data));
+
+                    let htmlOutput = '<h3>Information Found:</h3>';
+                    const headersInOrder = Object.keys(data.data);
+
+                    for (const key of headersInOrder) {
+                        console.log(`FRONTEND: Loop - Processing key: "${key}" (type: ${typeof key})`);
+                        if (Object.hasOwnProperty.call(data.data, key)) { // Good practice
+                            const value = data.data[key] === null || data.data[key] === undefined ? "" : String(data.data[key]); // Ensure value is a string
+                            console.log(`FRONTEND: Loop - Original value for "${key}": "${data.data[key]}" (type: ${typeof data.data[key]}), Processed value: "${value}" (type: ${typeof value})`);
+
+                            const currentEscapedKey = escapeHtml(key);
+                            // Use "--------------" for display if the original value from data.data[key] was truly empty/null/undefined
+                            const currentDisplayValue = (data.data[key] === null || data.data[key] === undefined || String(data.data[key]).trim() === "") ? "<em>--------------</em>" : escapeHtml(value);
+
+                            console.log(`FRONTEND: Loop - currentEscapedKey for "${key}": "${currentEscapedKey}" (type: ${typeof currentEscapedKey})`);
+                            console.log(`FRONTEND: Loop - currentDisplayValue for "${key}": "${currentDisplayValue}" (type: ${typeof currentDisplayValue})`);
+
+                            if (key === SEPARATOR_HEADER_KEY) {
+                                htmlOutput += `<hr class="data-separator">`;
+                            } else {
+                                htmlOutput += `<p>`;
+                                htmlOutput += `<span><strong>${currentEscapedKey}:</strong> ${currentDisplayValue}</span>`;
+                                // Only add copy button if there's an actual non-empty-string value
+                                if (value.trim() !== "") {
+                                    const escapedValueForButton = escapeJsString(value);
+                                    htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapedValueForButton}')">Copy</button>`;
+                                }
+                                htmlOutput += `</p>`;
+                            }
+                        }
+                    }
+                    console.log("FRONTEND: Final htmlOutput before setting innerHTML:", htmlOutput);
+                    resultsDiv.innerHTML = htmlOutput;
+                } else if (data.message) {
+                    resultsDiv.innerHTML = `<p>${escapeHtml(data.message)}</p>`;
+                } else if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">Error from server: ${escapeHtml(data.error)}</p>`;
+                } else {
+                    resultsDiv.innerHTML = '<p class="error">No information found or an unexpected response structure.</p>';
+                }
+            } catch (error) {
+                console.error("FRONTEND: Fetch, parsing, or processing error:", error);
+                resultsDiv.innerHTML = `<p class="error">An error occurred: ${escapeHtml(error.message)}. Check console.</p>`;
             }
         }
-        resultsDiv.innerHTML = htmlOutput;
-    } else if (data.message) { /* ... */ }
-    // ... rest of your conditions ...
-} catch (error) {
-    console.error("FRONTEND: Fetch or processing error:", error); // Log any catch block errors
-        }
-    }
-        // ... (escapeHtml, escapeJsString, copyToClipboard, updateCopyButton functions as before) ...
-        // ... (event listener for Enter key as before) ...
 
-        // Make sure all helper functions are here:
-        function escapeHtml(unsafe) { /* ... */ }
-        function escapeJsString(unsafe) { /* ... */ }
-        async function copyToClipboard(buttonElement, textToCopy) { /* ... */ }
-        function updateCopyButton(buttonElement, success, message = 'Copied!') { /* ... */ }
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') {
+                // console.warn("escapeHtml received non-string:", unsafe, typeof unsafe);
+                // Ensure it becomes a string for the replace methods to work, or handle appropriately
+                if (unsafe === null || unsafe === undefined) return '';
+                unsafe = String(unsafe);
+            }
+            return unsafe
+                 .replace(/&/g, "&")
+                 .replace(/</g, "<")
+                 .replace(/>/g, ">")
+                 .replace(/"/g, """)
+                 .replace(/'/g, "'");
+        }
+
+        function escapeJsString(unsafe) {
+            if (typeof unsafe !== 'string') {
+                // console.warn("escapeJsString received non-string:", unsafe, typeof unsafe);
+                if (unsafe === null || unsafe === undefined) return '';
+                unsafe = String(unsafe);
+            }
+            return unsafe
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, '\\\'')
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r')
+                .replace(/\t/g, '\\t')
+                .replace(/\u2028/g, '\\u2028')
+                .replace(/\u2029/g, '\\u2029');
+        }
+
+        async function copyToClipboard(buttonElement, textToCopy) {
+            if (!navigator.clipboard) {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = textToCopy;
+                    textArea.style.position = "fixed";
+                    document.body.appendChild(textArea);
+                    textArea.focus();textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if(buttonElement) updateCopyButton(buttonElement, true);
+                } catch (err) { if(buttonElement) updateCopyButton(buttonElement, false, 'Error'); }
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                if(buttonElement) updateCopyButton(buttonElement, true);
+            } catch (err) { if(buttonElement) updateCopyButton(buttonElement, false, 'Error'); }
+        }
+
+        function updateCopyButton(buttonElement, success, message = 'Copied!') {
+            const originalText = "Copy"; // Simpler to reset to fixed "Copy"
+            if (success) {
+                buttonElement.textContent = message;
+                buttonElement.classList.add('copied');
+                buttonElement.disabled = true;
+            } else {
+                buttonElement.textContent = message;
+            }
+            setTimeout(() => {
+                buttonElement.textContent = originalText;
+                buttonElement.classList.remove('copied');
+                buttonElement.disabled = false;
+            }, 2000);
+        }
 
         document.getElementById('emailInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
