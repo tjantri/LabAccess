@@ -50,12 +50,12 @@
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec'; // This is your actual URL
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec'; // Your actual URL
         const SEPARATOR_HEADER_KEY = "---";
 
         async function fetchInfo() {
             const resultsDiv = document.getElementById('results');
-            console.log("FRONTEND: fetchInfo called. resultsDiv element:", resultsDiv);
+            console.log("FRONTEND: fetchInfo called. resultsDiv element:", resultsDiv); // Line ~46 if script is right after <body>
             if (!resultsDiv) {
                 console.error("CRITICAL: resultsDiv is null! HTML element with ID 'results' not found.");
                 return;
@@ -82,7 +82,7 @@
                 if (!response.ok) {
                     let errorMsg = `HTTP error! Status: ${response.status}`;
                     try {
-                        const errorData = await response.json(); // Try to get error details
+                        const errorData = await response.json();
                         if (errorData && errorData.error) errorMsg = `Error from server: ${errorData.error}`;
                         else if (errorData && errorData.message) errorMsg = `Message from server: ${errorData.message}`;
                     } catch (e) { /* Could not parse JSON error from server */ }
@@ -103,14 +103,13 @@
                     let htmlOutput = '<h3>Information Found:</h3>';
                     const headersInOrder = Object.keys(data.data);
 
-                    for (const key of headersInOrder) {
+                    for (const key of headersInOrder) { // Line ~100 approx
                         console.log(`FRONTEND: Loop - Processing key: "${key}" (type: ${typeof key})`);
-                        if (Object.hasOwnProperty.call(data.data, key)) { // Good practice
-                            const value = data.data[key] === null || data.data[key] === undefined ? "" : String(data.data[key]); // Ensure value is a string
+                        if (Object.hasOwnProperty.call(data.data, key)) {
+                            const value = data.data[key] === null || data.data[key] === undefined ? "" : String(data.data[key]);
                             console.log(`FRONTEND: Loop - Original value for "${key}": "${data.data[key]}" (type: ${typeof data.data[key]}), Processed value: "${value}" (type: ${typeof value})`);
 
                             const currentEscapedKey = escapeHtml(key);
-                            // Use "--------------" for display if the original value from data.data[key] was truly empty/null/undefined
                             const currentDisplayValue = (data.data[key] === null || data.data[key] === undefined || String(data.data[key]).trim() === "") ? "<em>--------------</em>" : escapeHtml(value);
 
                             console.log(`FRONTEND: Loop - currentEscapedKey for "${key}": "${currentEscapedKey}" (type: ${typeof currentEscapedKey})`);
@@ -121,7 +120,6 @@
                             } else {
                                 htmlOutput += `<p>`;
                                 htmlOutput += `<span><strong>${currentEscapedKey}:</strong> ${currentDisplayValue}</span>`;
-                                // Only add copy button if there's an actual non-empty-string value
                                 if (value.trim() !== "") {
                                     const escapedValueForButton = escapeJsString(value);
                                     htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapedValueForButton}')">Copy</button>`;
@@ -130,7 +128,7 @@
                             }
                         }
                     }
-                    console.log("FRONTEND: Final htmlOutput before setting innerHTML:", htmlOutput);
+                    console.log("FRONTEND: Final htmlOutput before setting innerHTML:", htmlOutput); // Line ~130 approx
                     resultsDiv.innerHTML = htmlOutput;
                 } else if (data.message) {
                     resultsDiv.innerHTML = `<p>${escapeHtml(data.message)}</p>`;
@@ -145,10 +143,8 @@
             }
         }
 
-        function escapeHtml(unsafe) {
+        function escapeHtml(unsafe) { // Line ~145 approx
             if (typeof unsafe !== 'string') {
-                // console.warn("escapeHtml received non-string:", unsafe, typeof unsafe);
-                // Ensure it becomes a string for the replace methods to work, or handle appropriately
                 if (unsafe === null || unsafe === undefined) return '';
                 unsafe = String(unsafe);
             }
@@ -156,13 +152,12 @@
                  .replace(/&/g, "&")
                  .replace(/</g, "<")
                  .replace(/>/g, ">")
-                 .replace(/"/g, """)
+                 .replace(/"/g, """) // This was likely line 159 in the old error if this function was defined later
                  .replace(/'/g, "'");
         }
 
         function escapeJsString(unsafe) {
             if (typeof unsafe !== 'string') {
-                // console.warn("escapeJsString received non-string:", unsafe, typeof unsafe);
                 if (unsafe === null || unsafe === undefined) return '';
                 unsafe = String(unsafe);
             }
@@ -198,7 +193,7 @@
         }
 
         function updateCopyButton(buttonElement, success, message = 'Copied!') {
-            const originalText = "Copy"; // Simpler to reset to fixed "Copy"
+            const originalText = "Copy";
             if (success) {
                 buttonElement.textContent = message;
                 buttonElement.classList.add('copied');
