@@ -47,7 +47,7 @@
             const resultsDiv = document.getElementById('results');
             resultsDiv.innerHTML = '<p class="loading">Loading...</p>';
 
-            if (!WEB_APP_URL || WEB_APP_URL.includes('https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec') || WEB_APP_URL.includes('https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec')) {
+            if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') || WEB_APP_URL.includes('YOUR_URL_HERE')) {
                 resultsDiv.innerHTML = '<p class="error">ERROR: WEB_APP_URL is not configured correctly in the script.</p>';
                 console.error("WEB_APP_URL is not configured:", WEB_APP_URL);
                 return;
@@ -107,7 +107,7 @@
                  .replace(/&/g, "&")
                  .replace(/</g, "<")
                  .replace(/>/g, ">")
-                 .replace(/"/g, "&quot;")
+                 .replace(/"/g, """)
                  .replace(/'/g, "'");
         }
 
