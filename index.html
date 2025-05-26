@@ -34,25 +34,6 @@
 
 <script>
 
-        console.log("Script block started parsing..."); // <--- ADD THIS
-
-    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec';
-
-    console.log("WEB_APP_URL defined:", WEB_APP_URL); // <--- ADD THIS
-
-    async function fetchInfo() {
-        console.log("fetchInfo function called"); // <--- ADD THIS AT THE START OF THE FUNCTION
-        // ... rest of fetchInfo
-    }
-
-    console.log("fetchInfo function IS being defined now."); // <--- ADD THIS
-
-    function escapeHtml(unsafe) {
-        // ...
-    }
-    // ...
-    
-    /*
         // !!! IMPORTANT: PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE !!!
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec';
 
@@ -82,7 +63,7 @@
                         } else if (errorData && errorData.message) {
                             errorMsg = `Message: ${errorData.message}`;
                         }
-                    } catch (e) { /* Could not parse JSON error, stick with HTTP status // }
+                    } catch (e) { /* Could not parse JSON error, stick with HTTP status */ }
                     throw new Error(errorMsg);
                 }
 
@@ -126,7 +107,6 @@
                 fetchInfo();
             }
         });
-    */
     </script>
 </body>
 </html>
