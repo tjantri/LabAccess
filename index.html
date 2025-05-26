@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Info Lookup</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 4px; }
+        button {
+            background-color: #007bff; color: white; padding: 10px 15px; border: none;
+            border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;
+        }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
+        #results p { margin: 5px 0; }
+        .loading { text-align: center; font-style: italic; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Find Personal Information</h1>
+        <label for="email">Enter Email Address:</label>
+        <input type="email" id="emailInput" placeholder="e.g., user@example.com">
+        <button onclick="fetchInfo()">Search</button>
+        <div id="results">
+            <p>Enter an email and click search to see details.</p>
+        </div>
+    </div>
+WEB_APP_URL
+    <script>
+        // !!! IMPORTANT: PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE !!!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec';
+
+        async function fetchInfo() {
+            const email = document.getElementById('emailInput').value.trim();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p class="loading">Loading...</p>';
+
+            if (!email) {
+                resultsDiv.innerHTML = '<p class="error">Please enter an email address.</p>';
+                return;
+            }
+
+            // Construct the URL with the email parameter
+            const requestUrl = `${WEB_APP_URL}?email=${encodeURIComponent(email)}`;
+
+            try {
+                const response = await fetch(requestUrl);
+                if (!response.ok) {
+                    // Try to parse error from Apps Script JSON response if available
+                    let errorMsg = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData && errorData.error) {
+                            errorMsg = `Error: ${errorData.error}`;
+                            if(errorData.details) errorMsg += ` Details: ${errorData.details}`;
+                        } else if (errorData && errorData.message) {
+                            errorMsg = `Message: ${errorData.message}`;
+                        }
+                    } catch (e) { /* Could not parse JSON error, stick with HTTP status */ }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                    let htmlOutput = '<h3>Information Found:</h3>';
+                    for (const key in data.data) {
+                        if (Object.hasOwnProperty.call(data.data, key)) {
+                            htmlOutput += `<p><strong>${escapeHtml(key)}:</strong> ${escapeHtml(data.data[key])}</p>`;
+                        }
+                    }
+                    resultsDiv.innerHTML = htmlOutput;
+                } else if (data.message) {
+                    resultsDiv.innerHTML = `<p>${escapeHtml(data.message)}</p>`;
+                } else if (data.error) {
+                    resultsDiv.innerHTML = `<p class="error">Error: ${escapeHtml(data.error)}</p>`;
+                } else {
+                    resultsDiv.innerHTML = '<p class="error">No information found or an unexpected response.</p>';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                resultsDiv.innerHTML = `<p class="error">Failed to fetch information. ${error.message}. Check console for details.</p>`;
+            }
+        }
+
+        // Simple HTML escaping function to prevent XSS
+        function escapeHtml(unsafe) {
+            if (typeof unsafe !== 'string') return '';
+            return unsafe
+                 .replace(/&/g, "&")
+                 .replace(/</g, "<")
+                 .replace(/>/g, ">")
+                 .replace(/"/g, """)
+                 .replace(/'/g, "'");
+        }
+
+        // Optional: Allow pressing Enter in the input field to trigger search
+        document.getElementById('emailInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                fetchInfo();
+            }
+        });
+    </script>
+</body>
+</html>
