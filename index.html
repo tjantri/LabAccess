@@ -13,29 +13,44 @@
     button { /* Main search button */
         background-color: #7700ff; color: white; padding: 10px 15px; border: none;
         border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%;
+        transition: background-color 0.3s ease; /* Smooth transition */
     }
     button:hover { background-color: #4b2cbb; }
-    #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; }
-    #results h3 { margin-top: 0; }
+    #results { margin-top: 20px; padding: 15px; background-color: #e9ecef; border-radius: 4px; min-height: 50px; display: flex; flex-direction: column; justify-content: center; } /* Added min-height for better loading display */
+    #results h3 { margin-top: 0; color: #333; }
     #results p {
         margin: 8px 0; display: flex; justify-content: space-between; align-items: center;
         gap: 10px; border-bottom: 1px solid #ddd; padding-bottom: 8px;
     }
     #results p:last-child { border-bottom: none; }
     #results p span { flex-grow: 1; word-break: break-all; }
-    #results p strong { margin-right: 5px; }
+    #results p strong { margin-right: 5px; color: #555; }
     #results p span em { color: #777; font-style: italic; }
     .copy-btn {
         background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;
         font-size: 12px; padding: 6px 10px; box-sizing: border-box; min-width: 70px; width: auto;
         display: inline-flex; align-items: center; justify-content: center;
         text-align: center; line-height: normal;
+        transition: background-color 0.3s ease; /* Smooth transition */
     }
-    .copy-btn:hover { background-color: #4b2cbb; }
-    .copy-btn.copied { background-color: #7700ff; }
+    .copy-btn:hover { background-color: #5a6268; } /* Darker hover for copy button */
+    .copy-btn.copied { background-color: #28a745; /* Green for copied state */ }
     .data-separator { margin-top: 12px; margin-bottom: 12px; border: 0; border-top: 1px solid #ccc; }
-    .loading { text-align: center; font-style: italic; }
-    .error { color: red; font-weight: bold; }
+    .loading { text-align: center; font-style: italic; color: #666; }
+    .error { color: #dc3545; font-weight: bold; text-align: center; } /* Bootstrap-like red for error */
+
+    /* NEW CSS: Style for empty values */
+    .empty-value-background {
+        background-color: #7700ff; /* The desired background color */
+        color: white !important; /* Ensure text is visible on dark background */
+        padding: 2px 5px; /* Add some padding for visual appeal */
+        border-radius: 3px; /* Slightly rounded corners */
+        display: inline-block; /* To apply padding/background properly */
+    }
+    /* Ensure strong (label) and em (placeholder) also adapt if needed */
+    .empty-value-background strong, .empty-value-background em {
+        color: white !important;
+    }
 </style>
 </head>
 <body>
@@ -45,48 +60,50 @@
         <input type="email" id="emailInput" placeholder="e.g., user@example.com">
         <button onclick="fetchInfo()">Search</button>
         <div id="results">
-            <p>Enter an email and click search to see details.</p>
+            <p class="loading">Enter an email and click search to see details.</p>
         </div>
     </div>
 
     <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec'; // Your actual URL
+        // !! IMPORTANT: Replace this with your actual Google Apps Script Web App URL !!
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyeVbytEhwe8LMf-jtTWvWmbi3sQNhWS4CMdkZxeifApno33XHULkIL7WBi25LuIGH6/exec';
         const SEPARATOR_HEADER_KEY = "---";
 
         async function fetchInfo() {
             const resultsDiv = document.getElementById('results');
-            console.log("FRONTEND: fetchInfo called. resultsDiv element:", resultsDiv); // Line ~46 if script is right after <body>
-            if (!resultsDiv) {
-                console.error("CRITICAL: resultsDiv is null! HTML element with ID 'results' not found.");
-                return;
-            }
+            const emailInput = document.getElementById('emailInput');
+            const email = emailInput.value.trim();
 
-            const email = document.getElementById('emailInput').value.trim();
-            resultsDiv.innerHTML = '<p class="loading">Loading...</p>';
+            resultsDiv.innerHTML = '<p class="loading">Loading...</p>'; // Show loading immediately
 
             if (!WEB_APP_URL || WEB_APP_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE') || WEB_APP_URL.includes('YOUR_URL_HERE')) {
-                resultsDiv.innerHTML = '<p class="error">ERROR: WEB_APP_URL is not configured correctly (still contains placeholder).</p>';
-                console.error("WEB_APP_URL is not configured (still contains placeholder):", WEB_APP_URL);
+                resultsDiv.innerHTML = '<p class="error">Configuration Error: WEB_APP_URL is not set up correctly. Please update the `WEB_APP_URL` constant in the script.</p>';
+                console.error("Configuration Error: WEB_APP_URL is not configured (still contains placeholder):", WEB_APP_URL);
                 return;
             }
             if (!email) {
-                resultsDiv.innerHTML = '<p class="error">Please enter an email address.</p>';
+                resultsDiv.innerHTML = '<p class="error">Please enter an email address to search.</p>';
                 return;
             }
 
             const requestUrl = `${WEB_APP_URL}?email=${encodeURIComponent(email)}`;
-            console.log("FRONTEND: Attempting to fetch:", requestUrl);
+            console.log("FRONTEND: Attempting to fetch from:", requestUrl);
 
             try {
                 const response = await fetch(requestUrl);
                 if (!response.ok) {
                     let errorMsg = `HTTP error! Status: ${response.status}`;
+                    let details = '';
                     try {
                         const errorData = await response.json();
-                        if (errorData && errorData.error) errorMsg = `Error from server: ${errorData.error}`;
-                        else if (errorData && errorData.message) errorMsg = `Message from server: ${errorData.message}`;
-                    } catch (e) { /* Could not parse JSON error from server */ }
-                    throw new Error(errorMsg);
+                        if (errorData && (errorData.error || errorData.message)) {
+                            details = errorData.error || errorData.message;
+                            errorMsg = `Server responded with an error.`;
+                        }
+                    } catch (e) {
+                        console.warn("Could not parse error response as JSON:", e);
+                    }
+                    throw new Error(`${errorMsg} ${details ? '(' + details + ')' : ''}`);
                 }
 
                 const responseText = await response.text();
@@ -95,65 +112,64 @@
                 const data = JSON.parse(responseText);
                 console.log("FRONTEND: Parsed data object:", JSON.stringify(data, null, 2));
 
-
-                if (data.success && data.data) {
-                    console.log("FRONTEND: data.data object:", JSON.stringify(data.data, null, 2));
-                    console.log("FRONTEND: Keys of data.data:", Object.keys(data.data));
-
+                if (data.success && data.data && Object.keys(data.data).length > 0) {
                     let htmlOutput = '<h3>Information Found:</h3>';
                     const headersInOrder = Object.keys(data.data);
 
-                    for (const key of headersInOrder) { // Line ~100 approx
-                        console.log(`FRONTEND: Loop - Processing key: "${key}" (type: ${typeof key})`);
-                        if (Object.hasOwnProperty.call(data.data, key)) {
-                            const value = data.data[key] === null || data.data[key] === undefined ? "" : String(data.data[key]);
-                            console.log(`FRONTEND: Loop - Original value for "${key}": "${data.data[key]}" (type: ${typeof data.data[key]}), Processed value: "${value}" (type: ${typeof value})`);
+                    for (const key of headersInOrder) {
+                        const value = data.data[key];
+                        // Check if the value is considered empty
+                        const isEmpty = (value === null || value === undefined || String(value).trim() === "");
+                        const currentDisplayValue = isEmpty
+                            ? "<em>--------------</em>"
+                            : escapeHtml(String(value));
 
-                            const currentEscapedKey = escapeHtml(key);
-                            const currentDisplayValue = (data.data[key] === null || data.data[key] === undefined || String(data.data[key]).trim() === "") ? "<em>--------------</em>" : escapeHtml(value);
+                        const currentEscapedKey = escapeHtml(key);
+                        
+                        // Determine the CSS class based on whether the value is empty
+                        const valueClass = isEmpty ? ' class="empty-value-background"' : '';
 
-                            console.log(`FRONTEND: Loop - currentEscapedKey for "${key}": "${currentEscapedKey}" (type: ${typeof currentEscapedKey})`);
-                            console.log(`FRONTEND: Loop - currentDisplayValue for "${key}": "${currentDisplayValue}" (type: ${typeof currentDisplayValue})`);
-
-                            if (key === SEPARATOR_HEADER_KEY) {
-                                htmlOutput += `<hr class="data-separator">`;
-                            } else {
-                                htmlOutput += `<p>`;
-                                htmlOutput += `<span><strong>${currentEscapedKey}:</strong> ${currentDisplayValue}</span>`;
-                                if (value.trim() !== "") {
-                                    const escapedValueForButton = escapeJsString(value);
-                                    htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapedValueForButton}')">Copy</button>`;
-                                }
-                                htmlOutput += `</p>`;
+                        if (key === SEPARATOR_HEADER_KEY) {
+                            htmlOutput += `<hr class="data-separator">`;
+                        } else {
+                            htmlOutput += `<p>`;
+                            // Apply the class to the span element
+                            htmlOutput += `<span${valueClass}><strong>${currentEscapedKey}:</strong> ${currentDisplayValue}</span>`;
+                            
+                            if (!isEmpty) { // Only add copy button if the value is not empty or placeholder
+                                const escapedValueForButton = escapeJsString(String(value));
+                                htmlOutput += `<button class="copy-btn" onclick="copyToClipboard(this, '${escapedValueForButton}')">Copy</button>`;
                             }
+                            htmlOutput += `</p>`;
                         }
                     }
-                    console.log("FRONTEND: Final htmlOutput before setting innerHTML:", htmlOutput); // Line ~130 approx
                     resultsDiv.innerHTML = htmlOutput;
                 } else if (data.message) {
-                    resultsDiv.innerHTML = `<p>${escapeHtml(data.message)}</p>`;
+                    resultsDiv.innerHTML = `<p class="loading">${escapeHtml(data.message)}</p>`;
                 } else if (data.error) {
                     resultsDiv.innerHTML = `<p class="error">Error from server: ${escapeHtml(data.error)}</p>`;
                 } else {
-                    resultsDiv.innerHTML = '<p class="error">No information found or an unexpected response structure.</p>';
+                    resultsDiv.innerHTML = '<p class="loading">No information found for this email, or an unexpected response was received.</p>';
                 }
             } catch (error) {
                 console.error("FRONTEND: Fetch, parsing, or processing error:", error);
-                resultsDiv.innerHTML = `<p class="error">An error occurred: ${escapeHtml(error.message)}. Check console.</p>`;
+                resultsDiv.innerHTML = `<p class="error">An error occurred: ${escapeHtml(error.message)}. Please try again or check the console for more details.</p`;
             }
         }
 
-        function escapeHtml(unsafe) { // Line ~145 approx
+        // --- Utility Functions (unchanged from previous version) ---
+
+        function escapeHtml(unsafe) {
             if (typeof unsafe !== 'string') {
                 if (unsafe === null || unsafe === undefined) return '';
                 unsafe = String(unsafe);
             }
             return unsafe
-                 .replace(/&/g, "&")
-                 .replace(/</g, "<")
-                 .replace(/>/g, ">")
-                 .replace(/"/g, "&quot;") // This was likely line 159 in the old error if this function was defined later
-                 .replace(/'/g, "'");
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function escapeJsString(unsafe) {
@@ -173,26 +189,52 @@
         }
 
         async function copyToClipboard(buttonElement, textToCopy) {
+            const originalText = "Copy";
+            const copiedText = "Copied!";
+            const errorText = "Error!";
+
             if (!navigator.clipboard) {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                textArea.style.width = "2em";
+                textArea.style.height = "2em";
+                textArea.style.padding = "0";
+                textArea.style.border = "none";
+                textArea.style.outline = "none";
+                textArea.style.boxShadow = "none";
+                textArea.style.background = "transparent";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
                 try {
-                    const textArea = document.createElement("textarea");
-                    textArea.value = textToCopy;
-                    textArea.style.position = "fixed";
-                    document.body.appendChild(textArea);
-                    textArea.focus();textArea.select();
-                    document.execCommand('copy');
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        updateCopyButton(buttonElement, true, copiedText);
+                    } else {
+                        updateCopyButton(buttonElement, false, errorText);
+                    }
+                } catch (err) {
+                    console.error('Fallback: Could not copy text: ', err);
+                    updateCopyButton(buttonElement, false, errorText);
+                } finally {
                     document.body.removeChild(textArea);
-                    if(buttonElement) updateCopyButton(buttonElement, true);
-                } catch (err) { if(buttonElement) updateCopyButton(buttonElement, false, 'Error'); }
+                }
                 return;
             }
+
             try {
                 await navigator.clipboard.writeText(textToCopy);
-                if(buttonElement) updateCopyButton(buttonElement, true);
-            } catch (err) { if(buttonElement) updateCopyButton(buttonElement, false, 'Error'); }
+                updateCopyButton(buttonElement, true, copiedText);
+            } catch (err) {
+                console.error('Navigator Clipboard: Could not copy text: ', err);
+                updateCopyButton(buttonElement, false, errorText);
+            }
         }
 
-        function updateCopyButton(buttonElement, success, message = 'Copied!') {
+        function updateCopyButton(buttonElement, success, message) {
             const originalText = "Copy";
             if (success) {
                 buttonElement.textContent = message;
@@ -200,6 +242,8 @@
                 buttonElement.disabled = true;
             } else {
                 buttonElement.textContent = message;
+                buttonElement.classList.remove('copied');
+                buttonElement.disabled = false;
             }
             setTimeout(() => {
                 buttonElement.textContent = originalText;
